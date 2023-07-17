@@ -1,7 +1,9 @@
 class Rental < AwesomeModelBase
-  attr_accessor :car, :options
+  attr_accessor :computed_nb_days, :computed_total_price, :car, :options
   def initialize(attributes)
     super(attributes)
+    @computed_nb_days = nil
+    @computed_total_price = nil
     @car = nil
     @options = []
   end
@@ -17,9 +19,9 @@ class Rental < AwesomeModelBase
 
   COMMISSION_RATIO = 0.3
   INSURANCE_FEE_RATIO = 0.5
-  INSURANCE_FEE_CALCULATION = [:compute_total_price, COMMISSION_RATIO ,INSURANCE_FEE_RATIO]
+  INSURANCE_FEE_CALCULATION = [:computed_total_price, COMMISSION_RATIO ,INSURANCE_FEE_RATIO]
   ASSISTANCE_FEE_PRICE_PER_DAY = 100
-  ASSISTANCE_FEE_CACULATION = [:compute_nb_days, ASSISTANCE_FEE_PRICE_PER_DAY]
+  ASSISTANCE_FEE_CACULATION = [:computed_nb_days, ASSISTANCE_FEE_PRICE_PER_DAY]
 
   ACTIONS = [
     %W(driver debit),
@@ -29,8 +31,15 @@ class Rental < AwesomeModelBase
     %W(drivy credit),
   ]
 
+  def compute_nb_days
+    start_date = Date.parse(self.start_date)
+    end_date = Date.parse(self.end_date)
+    raise InputDataWarning, "Invalid rental period for Rental id '#{self.id}'. This rental will be excluded from treatment" if start_date > end_date
+    (end_date - start_date).to_i + 1
+  end
+
   def compute_total_price
-    nb_days = compute_nb_days
+    nb_days = self.computed_nb_days
 
     price = 0
     ratio = 1
@@ -61,19 +70,12 @@ class Rental < AwesomeModelBase
 
   private
 
-  def compute_nb_days
-    start_date = Date.parse(self.start_date)
-    end_date = Date.parse(self.end_date)
-    raise InputDataWarning, "Invalid rental period for Rental id '#{self.id}'. This rental will be excluded from treatment" if start_date > end_date
-    (end_date - start_date).to_i + 1
-  end
-
   def compute_driver_debit(actions)
-    self.compute_total_price + self.compute_total_options_price
+    self.computed_total_price + self.compute_total_options_price
   end
 
   def compute_owner_credit(actions)
-    total_price = self.compute_total_price
+    total_price = self.computed_total_price
 
     select_option_prices = Option::PRICES.select{|option_price|
       option_price[:target_action] == ["owner", "credit"] &&
@@ -81,7 +83,7 @@ class Rental < AwesomeModelBase
     }
 
     options_price = select_option_prices.reduce(0){|total, option_price|
-      total + (option_price[:price_per_day] * self.compute_nb_days)
+      total + (option_price[:price_per_day] * self.computed_nb_days)
     }
 
 
@@ -107,7 +109,7 @@ class Rental < AwesomeModelBase
       option_pp_day = Option::PRICES.find{|option_price|
         option_price[:type] == option.type
       }[:price_per_day]
-      total + (option_pp_day * self.compute_nb_days)
+      total + (option_pp_day * self.computed_nb_days)
     }
   end
 

@@ -1,6 +1,3 @@
-class InputDataWarning < StandardError
-end
-
 class GetaroundProcessor
   def initialize(input_datas)
     @input_datas = input_datas
@@ -13,9 +10,11 @@ class GetaroundProcessor
     @input_datas["rentals"].each do |rental_attributes|
       begin
         rental = Rental.new(rental_attributes)
+        rental.computed_nb_days = rental.compute_nb_days
         rental.car = cars.find{|car| car.id == rental.car_id }
         raise InputDataWarning, "[Warning] Car with id '#{rental.car_id}' not found. Rental with id '#{rental.id}' will be excluded from treatment" unless rental.car
-        rentals << rental if rental.car
+        rental.computed_total_price = rental.compute_total_price
+        rentals << rental
       rescue InputDataWarning => e
         puts e
       end

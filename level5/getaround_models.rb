@@ -17,3 +17,6 @@ class Option < AwesomeModelBase
       { type: "additional_insurance", price_per_day: 1000, target_action: %W(drivy credit)}
   ]
 end
+
+class InputDataWarning < StandardError
+end
