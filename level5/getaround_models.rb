@@ -2,7 +2,7 @@ class AwesomeModelBase
   def initialize(attributes)
     attributes.each do |name, value|
       instance_variable_set("@#{name}", value)
-      self.class.send(:attr_reader, name)
+      self.class.send(:attr_accessor, name)
     end
   end
 end
@@ -19,4 +19,7 @@ class Option < AwesomeModelBase
 end
 
 class InputDataWarning < StandardError
+end
+
+class Action < AwesomeModelBase
 end

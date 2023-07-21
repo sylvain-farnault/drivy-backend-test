@@ -3,6 +3,9 @@ require 'date'
 require_relative 'getaround_models'
 require_relative 'rental'
 require_relative 'getaround_processor'
+require_relative 'getaround_calculator'
+require_relative 'getaround_add_paiement_action'
+
 
 # get all datas
 file = File.read('./data/input.json')
